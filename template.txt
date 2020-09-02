@@ -1,3 +1,4 @@
 亲爱的{name}：
 这是9月的舰长礼物
-下载地址：xxxxxxxx
+地址：xxxxxx
+兑换码：{code}

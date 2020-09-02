@@ -1,6 +1,7 @@
 import json
 import time
 import requests
+import os
 
 infoUrl = 'http://api.bilibili.com/x/space/acc/info?mid='
 guardUrl = 'https://api.live.bilibili.com/xlive/app-room/v2/guardTab/topList'
@@ -26,7 +27,6 @@ guard_info = requests.get(guardUrl, {
 
 guard_num = guard_info['data']['info']['num']
 page_num = guard_info['data']['info']['page']
-print('总舰长数：', guard_num)
 
 recieve_list = []
 name_list = []
@@ -45,8 +45,6 @@ for i in range(page_num):
         recieve_list.append(g['uid'])
         name_list.append(g['username'])
 
-print(name_list)
-
 # 私信
 session = requests.session()
 scookies = requests.cookies.RequestsCookieJar()
@@ -58,10 +56,31 @@ template = ''
 with open('template.txt', 'r', encoding='utf-8') as f:
     template = f.read()
 
-print('开始发送私信……')
+codes = []
+with open('codes.txt', 'r', encoding='utf-8') as f:
+    codes = f.readlines()
+
+if (len(codes) != guard_num):
+    print("兑换码与舰长数量不符，请检查。")
+    print("兑换码：%d个；舰长：%d个" % (len(codes), guard_num))
+    exit()
+
+sendNum = 0
+
 for index in range(len(recieve_list)):
     uname = name_list[index]
     text = template.replace('{name}', uname)
+    text = text.replace('{code}', codes[index].replace('\n', ''))
+    print('(%d/%d)' % (index+1, len(recieve_list)))
+    print('私信内容:')
+    print('========')
+    print(text)
+    print('========')
+    cmd = input('确定：')
+    os.system('cls')
+    if (cmd == 'q'):
+        continue
+    sendNum += 1
     content = json.dumps({'content': text}, ensure_ascii=False)
     postData = {
         'msg[receiver_type]': 1,
@@ -75,10 +94,10 @@ for index in range(len(recieve_list)):
     }
     data = session.post(sendUrl, data=postData).json()
     if ('code' in data and data['code'] == 0):
-        print('['+str(recieve_list[index])+']'+'Send Success')
+        print('Last Send Success')
     else:
-        print('[' + str(recieve_list[index]) + ']' + 'Send Failed: ' + data)
+        print('Last Send Failed')
         index = index - 1
-    time.sleep(0.5)
 
-print('发送完毕')
+print('发送完毕(%d/%d)' % (sendNum, len(recieve_list)))
+input()
